@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryptonite-engine"
+version = "0.1.0"
+description = "Distributed crypto intelligence compute engine"
+requires-python = ">=3.11"
+dependencies = [
+  "celery[redis]>=5.4.0",
+  "SQLAlchemy[asyncio]>=2.0.31",
+  "asyncpg>=0.29.0",
+  "neo4j>=5.23.0",
+  "redis>=5.0.7",
+  "pydantic>=2.7.0",
+  "pydantic-settings>=2.4.0",
+  "numpy>=1.26.0",
+  "scikit-learn>=1.5.0",
+  "xgboost>=2.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2.0",
+  "pytest-asyncio>=0.23.8",
+  "ruff>=0.5.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+  "apps*",
+  "domain*",
+  "events*",
+  "infrastructure*",
+  "models*",
+  "pipelines*",
+  "workers*",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

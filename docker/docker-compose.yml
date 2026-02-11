@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cryptonite
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:5.25-community
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: worker
+    depends_on:
+      - postgres
+      - neo4j
+      - redis
+    environment:
+      POSTGRES_DSN: postgresql+asyncpg://postgres:postgres@postgres:5432/cryptonite
+      NEO4J_DSN: neo4j://neo4j:password@neo4j:7687
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER: redis://redis:6379/1
+      CELERY_BACKEND: redis://redis:6379/2
+    command: celery -A workers.celery worker -Q ingestion,metrics,graph,contract,market,signal,orchestrator --loglevel=INFO
+    volumes:
+      - ..:/app
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: beat
+    depends_on:
+      - redis
+    environment:
+      CELERY_BROKER: redis://redis:6379/1
+      CELERY_BACKEND: redis://redis:6379/2
+    volumes:
+      - ..:/app
+
+volumes:
+  postgres_data:
+  neo4j_data:
